@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { TrendingUp, AlertCircle, Calendar, CheckCircle2 } from 'lucide-react';
+import { TrendingUp, AlertCircle, Calendar, CheckCircle2, MessageSquare } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { format, differenceInDays } from 'date-fns';
@@ -24,6 +24,7 @@ const Dashboard = () => {
   const [deadlines, setDeadlines] = useState<Deadline[]>([]);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -43,6 +44,28 @@ const Dashboard = () => {
 
     fetchData();
   }, [token]);
+
+  const handleExportCalendar = async () => {
+    setExporting(true);
+    try {
+      const response = await axios.get('http://localhost:8080/api/deadlines/export', {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'optguard-deadlines.ics');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Failed to export calendar', error);
+    } finally {
+      setExporting(false);
+    }
+  };
 
   if (loading) return (
     <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
@@ -93,9 +116,19 @@ const Dashboard = () => {
           </h1>
           <p className="text-text-muted text-xl font-medium">Welcome back, {profile?.fullName?.split(' ')[0] || 'Student'}.</p>
         </div>
-        <div className="glass px-6 py-3 rounded-2xl flex items-center gap-3 border-black/5 shadow-sm">
-          <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-          <span className="text-xs font-black uppercase tracking-widest text-success">Active Compliance Guard</span>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={handleExportCalendar}
+            disabled={exporting}
+            className="hidden md:flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary text-white text-xs font-black uppercase tracking-widest hover:bg-primary/90 transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
+          >
+            <Calendar className="w-4 h-4" />
+            {exporting ? 'Exporting...' : 'Sync Calendar'}
+          </button>
+          <div className="glass px-6 py-3 rounded-2xl flex items-center gap-3 border-black/5 shadow-sm">
+            <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+            <span className="text-xs font-black uppercase tracking-widest text-success">Active Compliance Guard</span>
+          </div>
         </div>
       </header>
 

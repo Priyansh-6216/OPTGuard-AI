@@ -98,4 +98,34 @@ public class DeadlineService {
 
         deadlineRepository.saveAll(newDeadlines);
     }
+
+    public String generateIcsContent(User user) {
+        List<Deadline> deadlines = deadlineRepository.findByUserOrderByDeadlineDateAsc(user);
+        StringBuilder sb = new StringBuilder();
+        sb.append("BEGIN:VCALENDAR\r\n");
+        sb.append("VERSION:2.0\r\n");
+        sb.append("PRODID:-//OPTGuard//Compliance Calendar//EN\r\n");
+        sb.append("CALSCALE:GREGORIAN\r\n");
+        sb.append("METHOD:PUBLISH\r\n");
+        sb.append("X-WR-CALNAME:OPTGuard Compliance\r\n");
+
+        String now = java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd'T'HHmmss'Z'").format(java.time.Instant.now().atZone(java.time.ZoneId.of("UTC")));
+
+        for (Deadline deadline : deadlines) {
+            sb.append("BEGIN:VEVENT\r\n");
+            sb.append("UID:").append(deadline.getId()).append("-").append(user.getId()).append("@optguard.ai\r\n");
+            sb.append("DTSTAMP:").append(now).append("\r\n");
+            sb.append("DTSTART;VALUE=DATE:").append(deadline.getDeadlineDate().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"))).append("\r\n");
+            // End date is inclusive for some calendars if not specified, but for all-day events, DTEND should be the day after.
+            sb.append("DTEND;VALUE=DATE:").append(deadline.getDeadlineDate().plusDays(1).format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd"))).append("\r\n");
+            sb.append("SUMMARY:").append(deadline.getTitle()).append("\r\n");
+            sb.append("DESCRIPTION:").append(deadline.getDescription()).append("\r\n");
+            sb.append("STATUS:CONFIRMED\r\n");
+            sb.append("TRANSP:TRANSPARENT\r\n");
+            sb.append("END:VEVENT\r\n");
+        }
+
+        sb.append("END:VCALENDAR\r\n");
+        return sb.toString();
+    }
 }

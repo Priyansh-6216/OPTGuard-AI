@@ -12,6 +12,7 @@ OPTGuard AI is a full-stack web application designed to help international stude
 - 🧠 **AI Assistant**: GPT-4o powered chat for educational guidance on immigration rules.
 - 📊 **Dashboard**: High-level status overview with risk level indicators.
 - 🗺️ **Visual Timeline**: A beautiful roadmap of your entire OPT journey.
+- 📅 **Calendar Sync**: Export all your immigration deadlines to Google Calendar/iCal with one click.
 - 📂 **Document Checklist**: Track required forms (I-20s, EADs, I-94s).
 - 💼 **Employment Tracker**: Manage job history and monitor allowed unemployment days.
 

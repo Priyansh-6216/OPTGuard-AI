@@ -18,6 +18,7 @@ const Timeline = () => {
   const { token } = useAuth();
   const [deadlines, setDeadlines] = useState<Deadline[]>([]);
   const [loading, setLoading] = useState(true);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const fetchDeadlines = async () => {
@@ -35,15 +36,47 @@ const Timeline = () => {
     fetchDeadlines();
   }, [token]);
 
+  const handleExportCalendar = async () => {
+    setExporting(true);
+    try {
+      const response = await axios.get('http://localhost:8080/api/deadlines/export', {
+        headers: { Authorization: `Bearer ${token}` },
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'optguard-deadlines.ics');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (error) {
+      console.error('Failed to export calendar', error);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (loading) return <div className="text-secondary text-center py-20">Loading timeline...</div>;
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700">
-      <header className="max-w-3xl">
-        <h1 className="text-4xl font-bold mb-4 gradient-text">Your OPT Journey</h1>
-        <p className="text-secondary text-lg">
-          A visual roadmap of your immigration compliance milestones. Track your filing windows and reporting requirements.
-        </p>
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="max-w-3xl">
+          <h1 className="text-4xl font-bold mb-4 gradient-text">Your OPT Journey</h1>
+          <p className="text-secondary text-lg">
+            A visual roadmap of your immigration compliance milestones. Track your filing windows and reporting requirements.
+          </p>
+        </div>
+        <button 
+          onClick={handleExportCalendar}
+          disabled={exporting}
+          className="flex items-center gap-2 px-6 py-3 rounded-2xl bg-primary text-white font-bold hover:bg-blue-600 transition-all shadow-lg shadow-primary/20 shrink-0 disabled:opacity-50"
+        >
+          <Calendar className="w-5 h-5" />
+          {exporting ? 'Exporting...' : 'Sync to Calendar'}
+        </button>
       </header>
 
       <div className="relative">

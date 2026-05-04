@@ -20,10 +20,22 @@ public class DeadlineController {
 
     private final DeadlineRepository deadlineRepository;
     private final UserRepository userRepository;
+    private final com.optguard.backend.services.DeadlineService deadlineService;
 
     @GetMapping
     public ResponseEntity<List<Deadline>> getMyDeadlines(Authentication authentication) {
         User user = userRepository.findByEmail(authentication.getName()).orElseThrow();
         return ResponseEntity.ok(deadlineRepository.findByUserOrderByDeadlineDateAsc(user));
+    }
+
+    @GetMapping("/export")
+    public ResponseEntity<String> exportCalendar(Authentication authentication) {
+        User user = userRepository.findByEmail(authentication.getName()).orElseThrow();
+        String icsContent = deadlineService.generateIcsContent(user);
+
+        return ResponseEntity.ok()
+                .header(org.springframework.http.HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=optguard-deadlines.ics")
+                .header(org.springframework.http.HttpHeaders.CONTENT_TYPE, "text/calendar")
+                .body(icsContent);
     }
 }
